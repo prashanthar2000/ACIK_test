@@ -1,0 +1,1 @@
+node_modules/.bin/sequelize model:generate --name Product --attributes movieTitle:string,releaseYear:number,lenght:double,director:string,plot:string,Cast:string,IMBD_rating:double,language:string,genre:string,MRP:double,Inventory:number,SellingPrice:double,ShippingFee:double,Is_sellabe:number,Sold_unit_count:number

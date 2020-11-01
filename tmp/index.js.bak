@@ -1,0 +1,46 @@
+const https = require('https');
+
+// var get_movie_details = function (title , year)
+function get_movie_details(title , year)
+{
+    var movie = new Object();
+
+    return https.get('https://www.omdbapi.com/?t='+title+'&y='+year+'+&apikey=314c21fc', (resp) => {
+    let data = '';
+    let return_object  = new Object();
+    // A chunk of data has been recieved.
+    resp.on('data', (chunk) => {
+        data += chunk;
+    });
+
+    // The whole response has been received. Print out the result.
+    return resp.on('end', () => {
+        // console.log(JSON.parse(data).Title);
+        return JSON.parse(data);
+
+    });
+
+    }).on("error", (err) => {
+        console.log('error');
+        // return_object = {
+            // error:"api request was unsuccesful"
+        // }
+    // return return_object;
+        // return {error : "api-request-error"};
+    });
+    // console.log(resp);
+    console.log(movie);
+    return movie;
+}
+
+function test()
+{
+    let value = 100;
+    return value;
+
+}
+value = test()
+console.log(value)
+// var movie  = new Object();  
+movie = get_movie_details('Guardians of the Galaxy Vol. 2', 2017)
+console.log(movie );

@@ -1,0 +1,44 @@
+const axios = require('axios');
+
+// function get_movie_details(title , year)
+// {
+//     return new Promise(function (resolve, reject) { 
+//         axios.get('https://www.omdbapi.com/?t='+title+'&y='+year+'+&apikey=314c21fc')
+//         .then(response => {
+//         //   console.log(response.data);
+//         // console.log(response.data.explanation);
+//             return (response.data);
+//         })
+//         .catch(error => {
+//         // console.log(error);
+//             reject(error);
+//         });
+//     }
+// }
+
+
+function makeGetRequest(path) { 
+    return new Promise(function (resolve, reject) { 
+        axios.get(path).then( 
+            (response) => { 
+                var result = response.data; 
+                console.log('Processing Request'); 
+                resolve(result); 
+            }, 
+                (error) => { 
+                reject(error); 
+            } 
+        ); 
+    }); 
+} 
+  
+async function main(title , year) { 
+    var result = await makeGetRequest('https://www.omdbapi.com/?t='+title+'&y='+year+'+&apikey=314c21fc'); 
+    console.log(result.result); 
+    console.log('Statement 2'); 
+} 
+var title = 'Guardians of the Galaxy Vol. 2';
+var year = 2017;
+// movie = get_movie_details(title, year);
+// console.log(movie);
+main(title , year); 
