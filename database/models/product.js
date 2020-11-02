@@ -27,12 +27,8 @@ module.exports = (sequelize, DataTypes) => {
     Inventory: DataTypes.INTEGER,
     SellingPrice: DataTypes.DOUBLE,
     ShippingFee: DataTypes.DOUBLE,
-    Is_sellabe: 
-    {
-      type: Sequelize.INTEGER, 
-      defaultValue: 1
-    },
-      Sold_unit_count: DataTypes.INTEGER
+    Is_sellabe: DataTypes.INTEGER,
+    Sold_unit_count: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'Product',

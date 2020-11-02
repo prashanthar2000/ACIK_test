@@ -20,7 +20,7 @@ async function getMovieDetails(title, year) {
 
 
     const url = 'https://www.omdbapi.com/?t=' + title + '&y=' + year + '+&apikey=314c21fc'
-    console.log(url)
+    // console.log(url)
     try {
 
         const movie_detials = await makeApiCall(url)
@@ -35,8 +35,24 @@ async function getMovieDetails(title, year) {
     }
 }
 
+function check_auth(req_headers )
+{
+    if('x-auth' in req_headers){
+       
+        if(req_headers["x-auth"] == "tst-seller" )
+        {
+            return true;
+        }
+    }
+    return false
+}
 module.exports = {
     create(req, res) {
+        err = {err : true , message: "user not authorized"};
+        if(!check_auth(req.headers))
+        {
+            return res.send(err);
+        }
         // console.log('fetching data');
         let title = req.body.movieTitle;
         let year = req.body.releaseYear;
@@ -54,7 +70,10 @@ module.exports = {
                     Cast: data.Actors,
                     IMBD_rating: data.imdbRating,
                     language: data.Language,
-                    genre: data.Genre
+                    genre: data.Genre,
+                    Is_sellabe: 1,
+                    Inventory : 0, 
+                    Sold_unit_count: 0
                 })
                 .then(movie => {
                     return res.send({
@@ -75,6 +94,7 @@ module.exports = {
 
                 })
                 .catch(error => {
+                    console.log(error)
                     error = { 'err': true, 'data': {}, 'message': "Product couldn't not be created" };
                     res.send(error);
                 });
@@ -91,9 +111,15 @@ module.exports = {
     },
 
     sell(req , res){
+        err = {err : true , message: "user not authorized"};
+        if(!check_auth(req.headers))
+        {
+            return res.send(err);
+        }
+
         err = { err: true , message:'internal server error'} 
         // console.log(req.body)
-        Product.findByPk(req.body.productId).then(movie => {
+        return Product.findByPk(req.body.productId).then(movie => {
             if (!movie) 
             {
                 err = { err: true , message:'Product not found' }
@@ -114,8 +140,15 @@ module.exports = {
     },
     
     unsell(req , res){
+
+        err = {err : true , message: "user not authorized"};
+        if(!check_auth(req.headers))
+        {
+            return res.send(err);
+        }
+
         err = {err : true , message : "Internal server error"}
-        Product.findByPk(req.body.productId).then(movie =>{
+        return Product.findByPk(req.body.productId).then(movie =>{
             if(!movie)
             {
                 err = {err : true , message : "Product not found"}
@@ -131,10 +164,17 @@ module.exports = {
     }, 
     
     delete(req , res ){
+
+        err = {err : true , message: "user not authorized"};
+        if(!check_auth(req.headers))
+        {
+            return res.send(err);
+        }
+
         err = {err : true , message : "Internal server error"}
         // console.log(req)
         success = {err : true , message : "The product has been deleted successfully"}
-        Product.findByPk(req.params.productId).then(movie =>{
+        return Product.findByPk(req.params.productId).then(movie =>{
             if(!movie){
                 return res.status(200).send(success);        
             }
@@ -148,97 +188,153 @@ module.exports = {
     }, 
 
     sellable(req, res){
-        err = {err : true , message : "Internal server error"}
 
-    }    
+        err = {err : true , message: "user not authorized"};
+        if(!check_auth(req.headers))
+        {
+            return res.send(err);
+        }
 
 
-    // list(req, res) {
-    //   return Course
-    //     .findAll({
-    //       include: [{
-    //         model: Student,
-    //         as: 'students'
-    //       },{
-    //         model: Lecturer,
-    //         as: 'lecturer'
-    //       }],
-    //       order: [
-    //         ['createdAt', 'DESC'],
-    //         [{ model: Student, as: 'students' }, 'createdAt', 'DESC'],
-    //       ],
-    //     })
-    //     .then((courses) => res.status(200).send(courses))
-    //     .catch((error) => { res.status(400).send(error); });
-    // },
+        err = {err : true , message : "Internal server error"};
+        return Product.findAll({
+            where: {
+                Is_sellabe : 1
+            }
+        }).then(movies => {
+            // console.log(movies[0].movieTitle);
+            data = []
+            for(let i = 0 ; i < movies.length ; i++){
+                // console.log("incide for")
+                movie = {
+                    movieTitle : movies[i].movieTitle, 
+                    releaseYear : movies[i].releaseYear, 
+                    length : movies[i].lenght, 
+                    director : movies[i].director, 
+                    plot : movies[i].plot,
+                    cast : movies[i].Cast, 
+                    imbd : movies[i].IMBD_rating, 
+                    language : movies[i].language, 
+                    genre : movies[i].genre, 
+                    productId : movies[i].id, 
+                    sellingPrice : movies[i].SellingPrice,
+                    inventory : movies[i].Inventory, 
+                    soldUnitCount : movies[i].Sold_unit_count, 
+                    mrp : movies[i].MRP, 
+                    shippingPrice : movies[i].ShippingFee
+                }
+                // console.log(movie)
+                data[i] = movie;
+                // console.log(data);
+            }
+            success = {err : false , data:data , message: "Listed all sellable products succesfully"}
+            return res.status(200).send(success);
+            // success = {err = false, 
+                        // data =  data, 
+                        // message: ​"Listed all sellable products successfully"  }
+        }).catch(() => res.send(err));
 
-    // getById(req, res) {
-    //   return Course
-    //     .findByPk(req.params.id, {
-    //       include: [{
-    //         model: Course,
-    //         as: 'course'
-    //       }],
-    //     })
-    //     .then((course) => {
-    //       if (!course) {
-    //         return res.status(404).send({
-    //           message: 'Course Not Found',
-    //         });
-    //       }
-    //       return res.status(200).send(course);
-    //     })
-    //     .catch((error) => res.status(400).send(error));
-    // },
+    
+    }, 
+    
+    out_of_stock(req , res){
 
-    // add(req, res) {
-    //   return Course
-    //     .create({
-    //       course_name: req.body.course_name,
-    //     })
-    //     .then((course) => res.status(201).send(course))
-    //     .catch((error) => res.status(400).send(error));
-    // },
+        err = {err : true , message: "user not authorized"};
+        if(!check_auth(req.headers))
+        {
+            return res.send(err);
+        }
 
-    // update(req, res) {
-    //   return Course
-    //     .findByPk(req.params.id, {
-    //       include: [{
-    //         model: Course,
-    //         as: 'course'
-    //       }],
-    //     })
-    //     .then(course => {
-    //       if (!course) {
-    //         return res.status(404).send({
-    //           message: 'Course Not Found',
-    //         });
-    //       }
-    //       return course
-    //         .update({
-    //           course_name: req.body.course_name || classroom.course_name,
-    //         })
-    //         .then(() => res.status(200).send(course))
-    //         .catch((error) => res.status(400).send(error));
-    //     })
-    //     .catch((error) => res.status(400).send(error));
-    // },
 
-    // delete(req, res) {
-    //   return Course
-    //     .findByPk(req.params.id)
-    //     .then(course => {
-    //       if (!course) {
-    //         return res.status(400).send({
-    //           message: 'Course Not Found',
-    //         });
-    //       }
-    //       return course
-    //         .destroy()
-    //         .then(() => res.status(204).send())
-    //         .catch((error) => res.status(400).send(error));
-    //     })
-    //     .catch((error) => res.status(400).send(error));
-    // },
-  };
+        err = {err : true , message : "Internal server error"};
+        return Product.findAll({
+            where :{
+                Is_sellabe : 1,  
+                Inventory:0
+            }
+        }).then(movies => {
+            data = []
+            for(let i = 0 ; i < movies.length ; i++){
+                // console.log("incide for")
+                movie = {
+                    movieTitle : movies[i].movieTitle, 
+                    releaseYear : movies[i].releaseYear, 
+                    length : movies[i].lenght, 
+                    director : movies[i].director, 
+                    plot : movies[i].plot,
+                    cast : movies[i].Cast, 
+                    imbd : movies[i].IMBD_rating, 
+                    language : movies[i].language, 
+                    genre : movies[i].genre, 
+                    productId : movies[i].id, 
+                    sellingPrice : movies[i].SellingPrice,
+                    inventory : movies[i].Inventory, 
+                    soldUnitCount : movies[i].Sold_unit_count, 
+                    mrp : movies[i].MRP, 
+                    shippingPrice : movies[i].ShippingFee
+                }
+                // console.log(movie)
+                data[i] = movie;
+                // console.log(data);
+            }
+            success = {err : false , data:data , message: "Listed all sellable products succesfully"}
+            return res.status(200).send(success);
+            
+            // console.log(movies)
+        }).catch(() => res.send(err));
+
+    }, 
+
+    top_n_sold(req, res){
+
+        err = {err : true , message: "user not authorized"};
+        if(!check_auth(req.headers))
+        {
+            return res.send(err);
+        }
+
+
+        err = {err : true , message : "Internal server error"};
+        n = req.params.count;
+        Product.findAll({
+             
+            order:[["Sold_unit_count", "DESC"]  ],
+            limit:n
+            // order: '`Products`.`Sold_unit_count` DESC'
+            
+        }).then(movies => {
+            // console.log(movies);
+            data = []
+            for(let i = 0 ; i < movies.length ; i++){
+                // console.log("incide for")
+                movie = {
+                    movieTitle : movies[i].movieTitle, 
+                    releaseYear : movies[i].releaseYear, 
+                    length : movies[i].lenght, 
+                    director : movies[i].director, 
+                    plot : movies[i].plot,
+                    cast : movies[i].Cast, 
+                    imbd : movies[i].IMBD_rating, 
+                    language : movies[i].language, 
+                    genre : movies[i].genre, 
+                    productId : movies[i].id, 
+                    sellingPrice : movies[i].SellingPrice,
+                    inventory : movies[i].Inventory, 
+                    soldUnitCount : movies[i].Sold_unit_count, 
+                    mrp : movies[i].MRP, 
+                    shippingPrice : movies[i].ShippingFee
+                }
+                // console.log(movie)
+                data[i] = movie;
+                // console.log(data);
+            }
+            success = {err : false , data:data , message: "Listed all sellable products succesfully"}
+            res.status(200).send(success);
+            
+            // console.log(movies)
+        }).catch((errer) => res.send(err));
+
+    }
+
+};
 
